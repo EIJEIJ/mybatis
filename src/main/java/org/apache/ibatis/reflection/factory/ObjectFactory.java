@@ -26,24 +26,18 @@ import java.util.Properties;
 public interface ObjectFactory {
 
   /**
-   * Sets configuration properties.
-   * @param properties configuration properties
+   * 配置 ObjectFactory
+   * 在初始化 ObjectFactory 实例后，XML 中 objectFactory 元素体中定义的属性会被传递给该方法
    */
   void setProperties(Properties properties);
 
   /**
-   * Creates a new object with default constructor. 
-   * @param type Object type
-   * @return
+   * 通过无参构造方法，创建实例
    */
   <T> T create(Class<T> type);
 
   /**
-   * Creates a new object with the specified constructor and params.
-   * @param type Object type
-   * @param constructorArgTypes Constructor argument types
-   * @param constructorArgs Constructor argument values
-   * @return
+   * 通过有参构造方法，创建实例
    */
   <T> T create(Class<T> type, List<Class<?>> constructorArgTypes, List<Object> constructorArgs);
   

@@ -216,10 +216,17 @@ public final class TypeHandlerRegistry {
   }
 
   @SuppressWarnings("unchecked")
+  /**
+   * 获取 TypeHandler 对象
+   * getTypeHandler() 方法亦存在多种重载，而本重载方法被其它多个重载方法调用
+   */
   private <T> TypeHandler<T> getTypeHandler(Type type, JdbcType jdbcType) {
     if (ParamMap.class.equals(type)) {
       return null;
     }
+    // Java 数据类型与 JDBC 数据类型的关系往往是一对多，
+    // 所以一般会先根据 Java 数据类型获取 Map<JdbcType, TypeHandler<?>> 对象
+    // 再根据 JDBC 数据类型获取对应的 TypeHandler 对象
     Map<JdbcType, TypeHandler<?>> jdbcHandlerMap = getJdbcHandlerMap(type);
     TypeHandler<?> handler = null;
     if (jdbcHandlerMap != null) {
@@ -228,11 +235,9 @@ public final class TypeHandlerRegistry {
         handler = jdbcHandlerMap.get(null);
       }
       if (handler == null) {
-        // #591
         handler = pickSoleHandler(jdbcHandlerMap);
       }
     }
-    // type drives generics here
     return (TypeHandler<T>) handler;
   }
 
