@@ -52,10 +52,13 @@ import org.apache.ibatis.type.TypeHandler;
  * @author Kazuki Shimizu
  */
 public class XMLConfigBuilder extends BaseBuilder {
-
+  /** 标记是否已经解析过 mybatis-config.xml 配置文件 */
   private boolean parsed;
+  /** 解析器 */
   private final XPathParser parser;
+  /** 默认读取 environment 标签 的 default 属性 */
   private String environment;
+  /** 创建并缓存 Reflector 对象 */
   private final ReflectorFactory localReflectorFactory = new DefaultReflectorFactory();
 
   public XMLConfigBuilder(Reader reader) {
@@ -91,18 +94,22 @@ public class XMLConfigBuilder extends BaseBuilder {
     this.parser = parser;
   }
 
+  /**
+   * 解析的入口，调用了 parseConfiguration() 进行后续的解析
+   */
   public Configuration parse() {
     if (parsed) {
       throw new BuilderException("Each XMLConfigBuilder can only be used once.");
     }
     parsed = true;
+    // 查找 <configuration> 节点，并开始解析
     parseConfiguration(parser.evalNode("/configuration"));
     return configuration;
   }
 
   private void parseConfiguration(XNode root) {
     try {
-      //issue #117 read properties first
+      // 根据 root.evalNode("properties") 中的值就可以知道具体是解析哪个标签的方法
       propertiesElement(root.evalNode("properties"));
       Properties settings = settingsAsProperties(root.evalNode("settings"));
       loadCustomVfs(settings);
@@ -331,17 +338,25 @@ public class XMLConfigBuilder extends BaseBuilder {
 
   private void typeHandlerElement(XNode parent) throws Exception {
     if (parent != null) {
+      // 处理 <typeHandlers> 下的所有子标签
       for (XNode child : parent.getChildren()) {
+        // 处理 <package> 标签
         if ("package".equals(child.getName())) {
+          // 获取指定的包名
           String typeHandlerPackage = child.getStringAttribute("name");
+          // 通过 typeHandlerRegistry 的 register(packageName) 方法
+          // 扫描指定包中的所有 TypeHandler 类并进行注册
           typeHandlerRegistry.register(typeHandlerPackage);
         } else {
+          // Java 数据类型
           String javaTypeName = child.getStringAttribute("javaType");
+          // jdbc 数据类型
           String jdbcTypeName = child.getStringAttribute("jdbcType");
           String handlerTypeName = child.getStringAttribute("handler");
           Class<?> javaTypeClass = resolveClass(javaTypeName);
           JdbcType jdbcType = resolveJdbcType(jdbcTypeName);
           Class<?> typeHandlerClass = resolveClass(handlerTypeName);
+          // 注册
           if (javaTypeClass != null) {
             if (jdbcType == null) {
               typeHandlerRegistry.register(javaTypeClass, typeHandlerClass);
@@ -358,11 +373,16 @@ public class XMLConfigBuilder extends BaseBuilder {
 
   private void mapperElement(XNode parent) throws Exception {
     if (parent != null) {
+      // 处理 <mappers> 下的所有子标签
       for (XNode child : parent.getChildren()) {
         if ("package".equals(child.getName())) {
           String mapperPackage = child.getStringAttribute("name");
+          // configuration 内部会用 mapperRegistry 扫描包下面的所有 mapper 接口并注册
           configuration.addMappers(mapperPackage);
         } else {
+          // <mapper> 节点的 resource、url、mapperClass 三个属性互斥，只能有一个不为空
+          // Mybatis 提供了通过包名、映射文件路径、类全名、URL 四种方式引入映射器
+          // 映射器由一个接口和一个 XML 配置文件组成，XML文件中定义了一个命名空间 namespace，它的值就是接口对应的全路径
           String resource = child.getStringAttribute("resource");
           String url = child.getStringAttribute("url");
           String mapperClass = child.getStringAttribute("class");

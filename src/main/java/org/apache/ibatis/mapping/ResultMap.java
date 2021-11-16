@@ -39,6 +39,7 @@ import org.apache.ibatis.session.Configuration;
 public class ResultMap {
   private Configuration configuration;
 
+  // 这些属性一一对应了 <resultMap> 中的属性
   private String id;
   private Class<?> type;
   private List<ResultMapping> resultMappings;
@@ -48,8 +49,12 @@ public class ResultMap {
   private Set<String> mappedColumns;
   private Set<String> mappedProperties;
   private Discriminator discriminator;
+  // 是否含有嵌套的结果映射
+  // 如果某个映射关系中存在 resultMap 属性且不存在 resultSet 属性则为true
   private boolean hasNestedResultMaps;
+  // 是否含有嵌套查询，如果某个属性映射存在 select 属性则为true
   private boolean hasNestedQueries;
+  // 是否开启自动映射
   private Boolean autoMapping;
 
   private ResultMap() {

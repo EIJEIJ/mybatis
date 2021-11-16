@@ -88,14 +88,21 @@ public class XMLMapperBuilder extends BaseBuilder {
   }
 
   public void parse() {
+    // 是否已经加载过该配置文件
     if (!configuration.isResourceLoaded(resource)) {
+      // 解析 <mapper>节点
       configurationElement(parser.evalNode("/mapper"));
+      // 将 resource 添加到 configuration 的 loadedResources 属性中，
+      // 该属性记录了已经加载过的映射文件
       configuration.addLoadedResource(resource);
+      // 向当前 Namespace 注册 Mapper 接口
       bindMapperForNamespace();
     }
-
+    // 处理 configurationElement() 方法中解析失败的 <resultMap> 节点
     parsePendingResultMaps();
+    // 处理 configurationElement() 方法中解析失败的 <cacheRef> 节点
     parsePendingCacheRefs();
+    // 处理 configurationElement() 方法中解析失败的 <statement> 节点
     parsePendingStatements();
   }
 
@@ -105,11 +112,14 @@ public class XMLMapperBuilder extends BaseBuilder {
 
   private void configurationElement(XNode context) {
     try {
+      // 获取 <mapper> 节点的 namespace 属性
       String namespace = context.getStringAttribute("namespace");
       if (namespace == null || namespace.equals("")) {
         throw new BuilderException("Mapper's namespace cannot be empty");
       }
+      // 使用 MapperBuilderAssistant 对象的 currentNamespace 属性记录 namespace 命名空间
       builderAssistant.setCurrentNamespace(namespace);
+      // 开始逐步解析各节点
       cacheRefElement(context.evalNode("cache-ref"));
       cacheElement(context.evalNode("cache"));
       parameterMapElement(context.evalNodes("/mapper/parameterMap"));
