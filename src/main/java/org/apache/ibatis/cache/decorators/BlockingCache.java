@@ -36,8 +36,11 @@ import org.apache.ibatis.cache.CacheException;
  */
 public class BlockingCache implements Cache {
 
+  /** 阻塞超时时长 */
   private long timeout;
+  /** 被装饰者 */
   private final Cache delegate;
+  /** 每个 key 都有 ReentrantLock 对象 */
   private final ConcurrentHashMap<Object, ReentrantLock> locks;
 
   public BlockingCache(Cache delegate) {
@@ -60,6 +63,7 @@ public class BlockingCache implements Cache {
     try {
       delegate.putObject(key, value);
     } finally {
+      // 释放锁
       releaseLock(key);
     }
   }
@@ -98,23 +102,29 @@ public class BlockingCache implements Cache {
   }
   
   private void acquireLock(Object key) {
+    // 获取 key 对应的锁对象
     Lock lock = getLockForKey(key);
+    // 如果设置了超时时间
     if (timeout > 0) {
       try {
         boolean acquired = lock.tryLock(timeout, TimeUnit.MILLISECONDS);
+        // 如果超时，则抛异常
         if (!acquired) {
           throw new CacheException("Couldn't get a lock in " + timeout + " for the key " +  key + " at the cache " + delegate.getId());  
         }
       } catch (InterruptedException e) {
+        // 如果获取锁失败，则阻塞一段时间
         throw new CacheException("Got interrupted while trying to acquire lock for key " + key, e);
       }
     } else {
+      // 上锁
       lock.lock();
     }
   }
   
   private void releaseLock(Object key) {
     ReentrantLock lock = locks.get(key);
+    // 锁是否被当前线程持有，如果是则释放
     if (lock.isHeldByCurrentThread()) {
       lock.unlock();
     }

@@ -29,11 +29,14 @@ import org.apache.ibatis.cache.Cache;
 public class LruCache implements Cache {
 
   private final Cache delegate;
+  /** 使用的是 LinkedHashMap，元素是有序的 */
   private Map<Object, Object> keyMap;
+  /** 最近最少被使用的缓存项的 key */
   private Object eldestKey;
 
   public LruCache(Cache delegate) {
     this.delegate = delegate;
+    // 初始化了 keyMap，并定义了 eldestKey 的取值规则
     setSize(1024);
   }
 
@@ -48,12 +51,14 @@ public class LruCache implements Cache {
   }
 
   public void setSize(final int size) {
+    // accessOrder = true 表示 LinkedHashMap.get() 方法会改变元素顺序
     keyMap = new LinkedHashMap<Object, Object>(size, .75F, true) {
       private static final long serialVersionUID = 4267176411845948333L;
-
+      // 当调用 LinkedHashMap.put() 时会调用该方法
       @Override
       protected boolean removeEldestEntry(Map.Entry<Object, Object> eldest) {
         boolean tooBig = size() > size;
+        // 当已经达到缓存上限，更新 eldestKey 字段，后续删除
         if (tooBig) {
           eldestKey = eldest.getKey();
         }
@@ -65,6 +70,7 @@ public class LruCache implements Cache {
   @Override
   public void putObject(Object key, Object value) {
     delegate.putObject(key, value);
+    // 记录缓存项的 key，超出缓存上限则清除最久未使用的 key
     cycleKeyList(key);
   }
 

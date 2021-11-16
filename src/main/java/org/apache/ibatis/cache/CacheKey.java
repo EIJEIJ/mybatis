@@ -33,11 +33,21 @@ public class CacheKey implements Cloneable, Serializable {
   private static final int DEFAULT_MULTIPLYER = 37;
   private static final int DEFAULT_HASHCODE = 17;
 
+  // 参与计算 hashcode，默认值 DEFAULT_MULTIPLYER = 37
   private final int multiplier;
+  // 当前 CacheKey 对象的hashcode，默认值 DEFAULT_HASHCODE = 17
   private int hashcode;
+  // 校验和
   private long checksum;
   private int count;
-  // 8/21/2017 - Sonarlint flags this as needing to be marked transient.  While true if content is not serializable, this is not always true and thus should not be marked transient.
+
+  /**
+   * 由该集合中的所有元素共同决定两个 CacheKey 对象是否相同，一般会使用一下四个元素：
+   * 1. MappedStatement 的 id
+   * 2. 查询结果集的范围参数（ RowBounds 的 offset 和 limit ）
+   * 3. SQL 语句（其中可能包含占位符 "?" ）
+   * 4. SQL 语句中占位符的实际参数
+   */
   private List<Object> updateList;
 
   public CacheKey() {
@@ -57,14 +67,14 @@ public class CacheKey implements Cloneable, Serializable {
   }
 
   public void update(Object object) {
-    int baseHashCode = object == null ? 1 : ArrayUtil.hashCode(object); 
-
+    int baseHashCode = object == null ? 1 : ArrayUtil.hashCode(object);
+    // 重新计算 count、checksum 和 hashcode 的值
     count++;
     checksum += baseHashCode;
     baseHashCode *= count;
 
     hashcode = multiplier * hashcode + baseHashCode;
-
+    // 将 object 添加到 updateList 集合
     updateList.add(object);
   }
 

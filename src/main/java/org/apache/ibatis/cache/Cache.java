@@ -19,13 +19,11 @@ import java.util.concurrent.locks.ReadWriteLock;
 
 /**
  * SPI for cache providers.
- * 
- * One instance of cache will be created for each namespace.
- * 
- * The cache implementation must have a constructor that receives the cache id as an String parameter.
- * 
- * MyBatis will pass the namespace as id to the constructor.
- * 
+ *
+ * 每个 namespace 都会创建一个 cache 实例
+ *
+ * cache 实现类必须有一个接受 cache id 字符串参数的构造器
+ *
  * <pre>
  * public MyCache(final String id) {
  *  if (id == null) {
@@ -35,64 +33,32 @@ import java.util.concurrent.locks.ReadWriteLock;
  *  initialize();
  * }
  * </pre>
- *
- * @author Clinton Begin
  */
 
 public interface Cache {
 
-  /**
-   * @return The identifier of this cache
-   */
+  /** 获取当前缓存的 id */
   String getId();
 
   /**
-   * @param key Can be any object but usually it is a {@link CacheKey}
-   * @param value The result of a select.
+   * @param key 一般为 {@link CacheKey} 对象
+   * @param value 是 select 语句的结果
    */
   void putObject(Object key, Object value);
 
-  /**
-   * @param key The key
-   * @return The object stored in the cache.
-   */
+  /** 根据 key 获取缓存 */
   Object getObject(Object key);
 
-  /**
-   * As of 3.3.0 this method is only called during a rollback 
-   * for any previous value that was missing in the cache.
-   * This lets any blocking cache to release the lock that 
-   * may have previously put on the key.
-   * A blocking cache puts a lock when a value is null 
-   * and releases it when the value is back again.
-   * This way other threads will wait for the value to be 
-   * available instead of hitting the database.
-   *
-   * 
-   * @param key The key
-   * @return Not used
-   */
+  /** 删除指定 key 的缓存 */
   Object removeObject(Object key);
 
-  /**
-   * Clears this cache instance
-   */  
+  /** 清空缓存 */
   void clear();
 
-  /**
-   * Optional. This method is not called by the core.
-   * 
-   * @return The number of elements stored in the cache (not its capacity).
-   */
+  /** 获取缓存大小 */
   int getSize();
-  
-  /** 
-   * Optional. As of 3.2.6 this method is no longer called by the core.
-   *  
-   * Any locking needed by the cache must be provided internally by the cache provider.
-   * 
-   * @return A ReadWriteLock 
-   */
+
+  /** 获取读写锁 */
   ReadWriteLock getReadWriteLock();
 
 }
