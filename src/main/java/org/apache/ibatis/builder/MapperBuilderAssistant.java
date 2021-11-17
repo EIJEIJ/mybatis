@@ -180,9 +180,12 @@ public class MapperBuilderAssistant extends BaseBuilder {
       Discriminator discriminator,
       List<ResultMapping> resultMappings,
       Boolean autoMapping) {
+    // id = namespace.id
     id = applyCurrentNamespace(id, false);
+    // 获取父 ResultMap 的完整 id
     extend = applyCurrentNamespace(extend, true);
 
+    // 处理父 ResultMap 对象
     if (extend != null) {
       if (!configuration.hasResultMap(extend)) {
         throw new IncompleteElementException("Could not find a parent resultmap with id '" + extend + "'");
@@ -208,6 +211,7 @@ public class MapperBuilderAssistant extends BaseBuilder {
       }
       resultMappings.addAll(extendedResultMappings);
     }
+    // 构建 resultMap，并放入 configuration 中
     ResultMap resultMap = new ResultMap.Builder(configuration, id, type, resultMappings, autoMapping)
         .discriminator(discriminator)
         .build();
