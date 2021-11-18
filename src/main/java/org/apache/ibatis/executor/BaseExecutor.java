@@ -51,14 +51,18 @@ public abstract class BaseExecutor implements Executor {
 
   private static final Log log = LogFactory.getLog(BaseExecutor.class);
 
+  /** 事务对象，用于事务的提交、回滚和关闭 */
   protected Transaction transaction;
+  /** wrapper 封装了 Executor 对象 */
   protected Executor wrapper;
-
+  /** 延迟加载队列 */
   protected ConcurrentLinkedQueue<DeferredLoad> deferredLoads;
+  /** 一级缓存，用于缓存该 Executor 对象查询结果集映射得到的结果对象 */
   protected PerpetualCache localCache;
+  /** 一级缓存，用于缓存输出类型的参数 */
   protected PerpetualCache localOutputParameterCache;
   protected Configuration configuration;
-
+  /** 嵌套查询的层数 */
   protected int queryStack;
   private boolean closed;
 
@@ -113,7 +117,9 @@ public abstract class BaseExecutor implements Executor {
     if (closed) {
       throw new ExecutorException("Executor was closed.");
     }
+    // 清除一级缓存，该方法会调用 localCache 和 localOutputParameterCache 的 clear() 方法清除缓
     clearLocalCache();
+    // 抽象方法，交由子类实现
     return doUpdate(ms, parameter);
   }
 
@@ -196,6 +202,8 @@ public abstract class BaseExecutor implements Executor {
     if (closed) {
       throw new ExecutorException("Executor was closed.");
     }
+    // 可以看到 CacheKey 对象由 MappedStatement 的 id、RowBounds 的 offset 和 limit
+    // sql 语句(包含占位符"?")、用户传递的实参组成
     CacheKey cacheKey = new CacheKey();
     cacheKey.update(ms.getId());
     cacheKey.update(rowBounds.getOffset());
@@ -203,8 +211,9 @@ public abstract class BaseExecutor implements Executor {
     cacheKey.update(boundSql.getSql());
     List<ParameterMapping> parameterMappings = boundSql.getParameterMappings();
     TypeHandlerRegistry typeHandlerRegistry = ms.getConfiguration().getTypeHandlerRegistry();
-    // mimic DefaultParameterHandler logic
+    // 获取用户传入的实参，并添加到 CacheKey 对象中
     for (ParameterMapping parameterMapping : parameterMappings) {
+      // 过滤掉输出类型的参数
       if (parameterMapping.getMode() != ParameterMode.OUT) {
         Object value;
         String propertyName = parameterMapping.getProperty();
@@ -221,8 +230,8 @@ public abstract class BaseExecutor implements Executor {
         cacheKey.update(value);
       }
     }
+    // 如果 configuration 的 environment 不为空，则将该 environment 的 id 添加到 CacheKey 对象中
     if (configuration.getEnvironment() != null) {
-      // issue #176
       cacheKey.update(configuration.getEnvironment().getId());
     }
     return cacheKey;

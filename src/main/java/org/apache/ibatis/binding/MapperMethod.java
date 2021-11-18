@@ -50,6 +50,13 @@ public class MapperMethod {
     this.method = new MethodSignature(config, mapperInterface, method);
   }
 
+  /**
+   * 根据具体的节点操作处理：
+   * 1. 调用 convertArgsToSqlCommandParam() 方法封装参数，返回的 param 对象实际是 Map<String, Object>，key 为参数名，value 为具体的参数对象，是有具体查询参数的
+   * 2. 调用 SqlSession 具体的 crud 接口
+   * 3. 在具体的 SqlSession 接口中从 configuration 对象根据节点 ID 获取 MappedStatement 对象
+   * 4. 调用 Executor 具体的方法，执行语句
+   */
   public Object execute(SqlSession sqlSession, Object[] args) {
     Object result;
     switch (command.getType()) {
