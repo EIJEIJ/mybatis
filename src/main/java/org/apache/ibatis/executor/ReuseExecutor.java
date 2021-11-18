@@ -80,9 +80,12 @@ public class ReuseExecutor extends BaseExecutor {
   private Statement prepareStatement(StatementHandler handler, Log statementLog) throws SQLException {
     Statement stmt;
     BoundSql boundSql = handler.getBoundSql();
+    // 获取要执行的 sql 语句
     String sql = boundSql.getSql();
+    // 如果之前执行过该 sql，则从缓存中取出对应的 Statement 对象不再创建新的 Statement，减少系统开销
     if (hasStatementFor(sql)) {
       stmt = getStatement(sql);
+      // 修改超时时间
       applyTransactionTimeout(stmt);
     } else {
       Connection connection = getConnection(statementLog);
